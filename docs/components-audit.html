@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@logaz/ui — Component Audit & Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#E8EFFC',100:'#C5D7F7',200:'#9FBDE8',300:'#6B9AD4',400:'#4A78BF',500:'#3B55A2',600:'#2E4585',700:'#233568',800:'#1B2A52',900:'#1B3154' },
+            accent: { 50:'#FFF4E6',100:'#FFE0B2',200:'#FFCC80',300:'#FFB74D',400:'#FFA726',500:'#FB8607',600:'#F57C00',700:'#E65100',800:'#BF360C',900:'#D73A02' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    body { font-family: 'Montserrat', sans-serif; }
+    code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .cell-yes { background: #dcfce7; color: #166534; }
+    .cell-no { background: #f3f4f6; color: #9ca3af; }
+    .cell-migrated { background: #dbeafe; color: #1e40af; }
+    .cell-reexport { background: #e0e7ff; color: #3730a3; }
+    .cell-custom { background: #fef9c3; color: #854d0e; }
+    .level-chip { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .level-core { background: #dcfce7; color: #166534; }
+    .level-extended { background: #dbeafe; color: #1e40af; }
+    .level-custom { background: #fef9c3; color: #854d0e; }
+    tr:hover td { background: #f8fafc !important; }
+    .filter-active { background: #3B55A2 !important; color: white !important; border-color: #3B55A2 !important; }
+    .tab-active { border-bottom: 2px solid #3B55A2; color: #3B55A2; font-weight: 600; }
+    .tab-inactive { border-bottom: 2px solid transparent; color: #6b7280; }
+    .preview-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; background: white; display: flex; align-items: center; justify-content: center; min-height: 80px; }
+    .code-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow-x: auto; }
+    .code-block pre { margin: 0; padding: 12px 16px; font-size: 12px; line-height: 1.6; }
+    .modal-overlay { backdrop-filter: blur(4px); }
+    .comp-row { cursor: pointer; }
+    .comp-row:hover td:first-child { color: #3B55A2; text-decoration: underline; }
+    /* shadcn-like component styles for preview */
+    .sh-btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; font-weight: 500; padding: 8px 16px; transition: all 0.15s; cursor: pointer; }
+    .sh-btn-primary { background: #3B55A2; color: white; border: none; }
+    .sh-btn-primary:hover { background: #2E4585; }
+    .sh-btn-secondary { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; }
+    .sh-btn-outline { background: transparent; color: #0f172a; border: 1px solid #e2e8f0; }
+    .sh-btn-ghost { background: transparent; color: #0f172a; border: none; }
+    .sh-btn-destructive { background: #ef4444; color: white; border: none; }
+    .sh-btn-accent { background: #FB8607; color: white; border: none; }
+    .sh-btn-accent:hover { background: #F57C00; }
+    .sh-btn-sm { padding: 4px 12px; font-size: 13px; }
+    .sh-btn-lg { padding: 10px 24px; font-size: 15px; }
+    .sh-input { display: flex; height: 36px; width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; background: white; padding: 8px 12px; font-size: 14px; outline: none; }
+    .sh-input:focus { border-color: #3B55A2; box-shadow: 0 0 0 2px rgba(59,85,162,0.1); }
+    .sh-badge { display: inline-flex; align-items: center; border-radius: 9999px; padding: 2px 10px; font-size: 12px; font-weight: 500; }
+    .sh-badge-default { background: #3B55A2; color: white; }
+    .sh-badge-secondary { background: #f1f5f9; color: #0f172a; }
+    .sh-badge-outline { background: transparent; color: #0f172a; border: 1px solid #e2e8f0; }
+    .sh-badge-destructive { background: #fef2f2; color: #dc2626; }
+    .sh-badge-accent { background: #FFF4E6; color: #FB8607; }
+    .sh-card { border-radius: 8px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .sh-separator { height: 1px; background: #e2e8f0; width: 100%; }
+    .sh-label { font-size: 14px; font-weight: 500; color: #0f172a; }
+    .sh-checkbox { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #d1d5db; accent-color: #3B55A2; }
+    .sh-switch { width: 44px; height: 24px; border-radius: 12px; background: #e2e8f0; position: relative; cursor: pointer; transition: background 0.2s; }
+    .sh-switch.active { background: #3B55A2; }
+    .sh-switch::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .sh-switch.active::after { transform: translateX(20px); }
+    .sh-progress { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .sh-progress-bar { height: 100%; background: #3B55A2; border-radius: 4px; transition: width 0.5s; }
+    .sh-skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .sh-avatar { width: 40px; height: 40px; border-radius: 50%; background: #3B55A2; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+    .sh-slider { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; position: relative; }
+    .sh-slider-thumb { width: 20px; height: 20px; border-radius: 50%; background: white; border: 2px solid #3B55A2; position: absolute; top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .sh-tabs { display: flex; border-bottom: 1px solid #e2e8f0; }
+    .sh-tab { padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: #6b7280; }
+    .sh-tab.active { border-bottom-color: #3B55A2; color: #3B55A2; }
+    .sh-alert { border-radius: 8px; border: 1px solid #e2e8f0; padding: 12px 16px; display: flex; gap: 12px; }
+    .sh-select { display: flex; height: 36px; align-items: center; justify-content: space-between; border-radius: 6px; border: 1px solid #e2e8f0; background: white; padding: 8px 12px; font-size: 14px; min-width: 180px; cursor: pointer; }
+    .sh-textarea { width: 100%; min-height: 80px; border-radius: 6px; border: 1px solid #e2e8f0; padding: 8px 12px; font-size: 14px; resize: vertical; outline: none; font-family: inherit; }
+    .sh-textarea:focus { border-color: #3B55A2; box-shadow: 0 0 0 2px rgba(59,85,162,0.1); }
+    .sh-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .sh-table th { text-align: left; padding: 8px 16px; font-weight: 500; color: #6b7280; border-bottom: 1px solid #e2e8f0; }
+    .sh-table td { padding: 8px 16px; border-bottom: 1px solid #f1f5f9; }
+    .sh-tooltip { position: relative; display: inline-block; }
+    .sh-tooltip-content { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
+    .sh-tooltip-content::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -4px; border: 4px solid transparent; border-top-color: #0f172a; }
+    .sh-radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #d1d5db; appearance: none; cursor: pointer; position: relative; }
+    .sh-radio:checked { border-color: #3B55A2; }
+    .sh-radio:checked::after { content: ''; position: absolute; width: 8px; height: 8px; background: #3B55A2; border-radius: 50%; top: 2px; left: 2px; }
+    .sh-toggle { display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; padding: 8px; border: 1px solid #e2e8f0; background: transparent; cursor: pointer; }
+    .sh-toggle.active { background: #f1f5f9; border-color: #3B55A2; }
+    .sh-accordion-item { border-bottom: 1px solid #e2e8f0; }
+    .sh-accordion-trigger { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <!-- Header -->
+  <header class="bg-brand-500 text-white">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold">@logaz/ui</h1>
+            <span class="bg-accent-500 text-white text-xs font-bold px-2 py-1 rounded">LOGAZ</span>
+          </div>
+          <p class="text-brand-200 mt-1">Component Audit, Preview &amp; Code Examples</p>
+        </div>
+        <div class="text-right text-sm text-brand-200">
+          <div>15 февраля 2026</div>
+          <div class="mt-1">4 проекта &middot; 48 в DS &middot; 75 всего</div>
+        </div>
+      </div>
+      <!-- Nav tabs -->
+      <div class="flex gap-1 mt-6 -mb-8">
+        <button onclick="showSection('audit')" class="section-tab px-4 py-2 rounded-t-lg text-sm font-medium bg-white text-brand-500" data-section="audit">Аудит</button>
+        <button onclick="showSection('gallery')" class="section-tab px-4 py-2 rounded-t-lg text-sm font-medium bg-brand-400/50 text-white/80 hover:bg-brand-400/70" data-section="gallery">Галерея компонентов</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== SECTION: AUDIT ===================== -->
+  <div id="section-audit">
+    <!-- Summary Cards -->
+    <section class="max-w-7xl mx-auto px-6 mt-8">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white rounded-lg shadow-sm border p-4 text-center">
+          <div class="text-3xl font-bold text-brand-500">48</div>
+          <div class="text-xs text-gray-500 mt-1">В @logaz/ui</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-4 text-center">
+          <div class="text-3xl font-bold text-green-600">7</div>
+          <div class="text-xs text-gray-500 mt-1">Общие (4/4)</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-4 text-center">
+          <div class="text-3xl font-bold text-blue-600">41</div>
+          <div class="text-xs text-gray-500 mt-1">Общие (3/4)</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-4 text-center">
+          <div class="text-3xl font-bold text-yellow-600">27</div>
+          <div class="text-xs text-gray-500 mt-1">Локальные (custom)</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-4 text-center">
+          <div class="text-3xl font-bold text-gray-700">75</div>
+          <div class="text-xs text-gray-500 mt-1">Всего файлов UI</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="max-w-7xl mx-auto px-6 mt-8">
+      <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h2 class="text-lg font-semibold mb-4">Архитектура</h2>
+        <div class="grid md:grid-cols-2 gap-6 text-center text-sm">
+          <div class="border-2 border-green-300 rounded-lg p-5 bg-green-50/30">
+            <div class="text-xs text-green-600 uppercase tracking-wider mb-3 font-semibold">&#10003; Миграция завершена</div>
+            <div class="bg-blue-100 border-2 border-blue-400 rounded p-3 mb-3">
+              <div class="font-semibold text-blue-800">@logaz/ui</div>
+              <div class="text-blue-600 text-xs mt-1">48 компонентов + 2 хука + токены + Tailwind preset</div>
+            </div>
+            <div class="text-green-500 mb-2">&darr; github:LOGAZ-PGG/logaz-ui <span class="bg-green-200 text-green-800 text-[10px] font-bold px-1.5 py-0.5 rounded ml-1">PUBLIC</span></div>
+            <div class="bg-green-50 border border-green-300 rounded p-2 mb-2"><span class="font-medium text-green-700">Fuel Hub</span> <span class="text-green-500 text-xs">48 re-export + 10 custom</span></div>
+            <div class="bg-green-50 border border-green-300 rounded p-2 mb-2"><span class="font-medium text-green-700">Card Mobile</span> <span class="text-green-500 text-xs">48 re-export</span></div>
+            <div class="bg-green-50 border border-green-300 rounded p-2 mb-2"><span class="font-medium text-green-700">Loyalty CRM</span> <span class="text-green-500 text-xs">48 re-export + 15 custom</span></div>
+            <div class="bg-green-50 border border-green-300 rounded p-2"><span class="font-medium text-green-700">AGZS Public</span> <span class="text-green-500 text-xs">7 re-export + 3 custom</span></div>
+          </div>
+          <div class="text-left text-xs space-y-3 flex flex-col justify-center">
+            <div class="font-semibold text-gray-700 text-sm mb-1">Структура пакета</div>
+            <div class="bg-gray-50 rounded p-3 font-mono text-gray-600 space-y-1">
+              <div>@logaz/ui</div>
+              <div class="pl-3">/dist &mdash; 48 компонентов (tsup build)</div>
+              <div class="pl-3">/tailwind &mdash; Tailwind CSS preset (LOGAZ brand)</div>
+              <div class="pl-3">/tokens &mdash; colors, typography</div>
+              <div class="pl-3">/hooks &mdash; useToast, useIsMobile</div>
+            </div>
+            <div class="text-gray-500 mt-2">
+              <div class="mb-1"><span class="font-medium">Brand:</span> Primary #3B55A2 &middot; Secondary #FB8607</div>
+              <div class="mb-1"><span class="font-medium">Удалено кода:</span> ~15 000 строк дублирования</div>
+              <div><span class="font-medium">Deploy:</span> Fuel Hub &#10003; Loyalty CRM &#10003; AGZS &#10003; Card Mobile &#9203;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters + Table -->
+    <section class="max-w-7xl mx-auto px-6 mt-8">
+      <div class="bg-white rounded-lg shadow-sm border p-4 mb-4">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-sm font-medium text-gray-500">Фильтр:</span>
+          <button onclick="filterTable('all')" class="filter-btn filter-active text-xs px-3 py-1.5 rounded-full border border-gray-200 font-medium" data-filter="all">Все (75)</button>
+          <button onclick="filterTable('ds')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-blue-200 text-blue-700 bg-blue-50 font-medium" data-filter="ds">В @logaz/ui (48)</button>
+          <button onclick="filterTable('core')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-green-200 text-green-700 bg-green-50 font-medium" data-filter="core">Общие 4/4 (7)</button>
+          <button onclick="filterTable('extended')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-blue-200 text-blue-700 bg-blue-50 font-medium" data-filter="extended">Общие 3/4 (41)</button>
+          <button onclick="filterTable('custom')" class="filter-btn text-xs px-3 py-1.5 rounded-full border border-yellow-200 text-yellow-700 bg-yellow-50 font-medium" data-filter="custom">Локальные (27)</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm border overflow-hidden mb-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="componentTable">
+            <thead>
+              <tr class="bg-gray-50 border-b">
+                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-48">Компонент</th>
+                <th class="text-center px-3 py-3 font-semibold text-blue-600 w-20">@logaz/ui</th>
+                <th class="text-center px-3 py-3 font-semibold text-indigo-600 w-20">Fuel Hub</th>
+                <th class="text-center px-3 py-3 font-semibold text-purple-600 w-20">Card Mobile</th>
+                <th class="text-center px-3 py-3 font-semibold text-teal-600 w-20">Loyalty CRM</th>
+                <th class="text-center px-3 py-3 font-semibold text-orange-600 w-20">AGZS Public</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600">Уровень</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-600">Действие</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-4 text-xs text-gray-500 mb-8">
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded cell-migrated inline-block"></span> В пакете</div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded cell-reexport inline-block"></span> Re-export</div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded cell-custom inline-block"></span> Custom (локальный)</div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded cell-no inline-block"></span> Нет</div>
+        <div class="ml-auto text-gray-400">Кликни на компонент для просмотра превью и кода</div>
+      </div>
+    </section>
+
+    <!-- Migration Status -->
+    <section class="max-w-7xl mx-auto px-6 mb-12">
+      <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-2xl">&#10003;</span>
+          <h2 class="text-lg font-semibold text-green-800">Миграция завершена</h2>
+          <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">15.02.2026</span>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="border border-green-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">&#10003;</span>
+              <span class="text-sm font-semibold text-green-800">Общие 4/4 (7)</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">Re-export во всех 4 проектах</p>
+            <div class="flex flex-wrap gap-1" id="wave1"></div>
+          </div>
+          <div class="border border-green-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">&#10003;</span>
+              <span class="text-sm font-semibold text-green-800">Общие 3/4 (41)</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">Re-export в Fuel Hub + Card Mobile + Loyalty CRM</p>
+            <div class="flex flex-wrap gap-1" id="wave2"></div>
+          </div>
+          <div class="border border-gray-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="bg-yellow-100 text-yellow-600 text-xs font-bold px-2 py-1 rounded">&mdash;</span>
+              <span class="text-sm font-semibold text-gray-700">Локальные (27)</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">Project-specific, не в DS</p>
+            <div class="flex flex-wrap gap-1" id="wave3"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== SECTION: GALLERY ===================== -->
+  <div id="section-gallery" class="hidden">
+    <section class="max-w-7xl mx-auto px-6 mt-8 mb-4">
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="text-sm font-medium text-gray-500">Показать:</span>
+        <button onclick="filterGallery('all')" class="gal-btn filter-active text-xs px-3 py-1.5 rounded-full border font-medium" data-gfilter="all">Все (75)</button>
+        <button onclick="filterGallery('ds')" class="gal-btn text-xs px-3 py-1.5 rounded-full border border-blue-200 text-blue-700 bg-blue-50 font-medium" data-gfilter="ds">В @logaz/ui (48)</button>
+        <button onclick="filterGallery('core')" class="gal-btn text-xs px-3 py-1.5 rounded-full border border-green-200 text-green-700 bg-green-50 font-medium" data-gfilter="core">Общие 4/4 (7)</button>
+        <button onclick="filterGallery('extended')" class="gal-btn text-xs px-3 py-1.5 rounded-full border border-blue-200 text-blue-700 bg-blue-50 font-medium" data-gfilter="extended">Общие 3/4 (41)</button>
+        <button onclick="filterGallery('custom')" class="gal-btn text-xs px-3 py-1.5 rounded-full border border-yellow-200 text-yellow-700 bg-yellow-50 font-medium" data-gfilter="custom">Локальные (27)</button>
+      </div>
+    </section>
+    <section class="max-w-7xl mx-auto px-6 mb-12" id="galleryContainer"></section>
+  </div>
+
+  <!-- ===================== MODAL ===================== -->
+  <div id="modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0 bg-black/40" onclick="closeModal()"></div>
+    <div class="absolute inset-4 md:inset-12 lg:inset-x-24 lg:inset-y-8 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden z-10">
+      <div class="flex items-center justify-between px-6 py-4 border-b" id="modalHeader"></div>
+      <div class="flex-1 overflow-y-auto p-6" id="modalBody"></div>
+    </div>
+  </div>
+
+  <footer class="bg-gray-100 border-t py-4 text-center text-xs text-gray-400">
+    @logaz/ui Component Audit &middot; 2026-02-15 &middot; LOGAZ Platform
+  </footer>
+
+<script>
+// ==================== DATA ====================
+const COMPONENTS = [
+  // --- Core: shared by all 4 projects (7) ---
+  { name:'button', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Кнопка с вариантами (primary, secondary, outline, ghost, destructive) и размерами.',
+    radix:'@radix-ui/react-slot',
+    preview:`<div class="flex flex-wrap items-center gap-3">
+      <button class="sh-btn sh-btn-primary">Primary</button>
+      <button class="sh-btn sh-btn-secondary">Secondary</button>
+      <button class="sh-btn sh-btn-outline">Outline</button>
+      <button class="sh-btn sh-btn-ghost">Ghost</button>
+      <button class="sh-btn sh-btn-destructive">Destructive</button>
+      <button class="sh-btn sh-btn-accent">Accent</button>
+      <button class="sh-btn sh-btn-primary sh-btn-sm">Small</button>
+      <button class="sh-btn sh-btn-primary sh-btn-lg">Large</button>
+    </div>`,
+    code:`import { Button } from '@logaz/ui'
+
+<Button variant="default">Primary</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="destructive">Destructive</Button>
+<Button size="sm">Small</Button>
+<Button size="lg">Large</Button>` },
+
+  { name:'card', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Контейнер с заголовком, описанием и контентом.',
+    radix:'\u2014',
+    preview:`<div class="sh-card w-full max-w-sm">
+      <div class="p-6 pb-2"><div class="font-semibold text-base">AGZS \u2116 42</div><div class="text-sm text-gray-500 mt-1">Топливная карта клиента</div></div>
+      <div class="px-6 pb-4"><div class="text-sm text-gray-600">Баланс: 12 500 \u20BD &middot; Бонусы: 340</div></div>
+      <div class="px-6 pb-6 flex gap-2"><button class="sh-btn sh-btn-primary sh-btn-sm">Пополнить</button><button class="sh-btn sh-btn-outline sh-btn-sm">История</button></div>
+    </div>`,
+    code:`import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@logaz/ui'
+
+<Card>
+  <CardHeader>
+    <CardTitle>AGZS \u2116 42</CardTitle>
+    <CardDescription>Топливная карта клиента</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p>Баланс: 12 500 \u20BD</p>
+  </CardContent>
+  <CardFooter>
+    <Button>Пополнить</Button>
+  </CardFooter>
+</Card>` },
+
+  { name:'badge', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Бейджи для статусов и тегов.',
+    radix:'\u2014',
+    preview:`<div class="flex flex-wrap gap-2">
+      <span class="sh-badge sh-badge-default">Default</span>
+      <span class="sh-badge sh-badge-secondary">Secondary</span>
+      <span class="sh-badge sh-badge-outline">Outline</span>
+      <span class="sh-badge sh-badge-destructive">Destructive</span>
+      <span class="sh-badge sh-badge-accent">Accent</span>
+    </div>`,
+    code:`import { Badge } from '@logaz/ui'
+
+<Badge>Default</Badge>
+<Badge variant="secondary">Secondary</Badge>
+<Badge variant="outline">Outline</Badge>
+<Badge variant="destructive">Destructive</Badge>` },
+
+  { name:'input', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Текстовое поле ввода с вариантами состояний.',
+    radix:'\u2014',
+    preview:`<div class="space-y-3 w-full max-w-sm">
+      <input class="sh-input" placeholder="\u2116 топливной карты..." />
+      <input class="sh-input" value="7700-1234-5678" />
+      <input class="sh-input opacity-50" disabled placeholder="Disabled" />
+    </div>`,
+    code:`import { Input } from '@logaz/ui'
+
+<Input placeholder="\u2116 топливной карты..." />
+<Input disabled placeholder="Disabled" />` },
+
+  { name:'table', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Таблица данных.',
+    radix:'\u2014',
+    preview:`<table class="sh-table w-full"><thead><tr><th>AGZS</th><th>Топливо</th><th>Литров</th><th>Сумма</th></tr></thead><tbody><tr><td>AGZS-42</td><td>CNG</td><td>150</td><td>3 750 \u20BD</td></tr><tr><td>AGZS-15</td><td>LNG</td><td>80</td><td>2 400 \u20BD</td></tr><tr><td>AGZS-07</td><td>CNG</td><td>200</td><td>5 000 \u20BD</td></tr></tbody></table>`,
+    code:`import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@logaz/ui'
+
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>AGZS</TableHead>
+      <TableHead>Сумма</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>AGZS-42</TableCell>
+      <TableCell>3 750 \u20BD</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>` },
+
+  { name:'skeleton', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Скелетон-загрузка.',
+    radix:'\u2014',
+    preview:`<div class="space-y-3 w-full max-w-sm"><div class="sh-skeleton h-4 w-3/4"></div><div class="sh-skeleton h-4 w-1/2"></div><div class="flex gap-3 mt-4"><div class="sh-skeleton h-10 w-10 rounded-full"></div><div class="flex-1 space-y-2"><div class="sh-skeleton h-3 w-full"></div><div class="sh-skeleton h-3 w-4/5"></div></div></div></div>`,
+    code:`import { Skeleton } from '@logaz/ui'
+
+<Skeleton className="h-4 w-3/4" />
+<Skeleton className="h-10 w-10 rounded-full" />` },
+
+  { name:'select', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:'reexport', level:'core',
+    desc:'Выпадающий список выбора.',
+    radix:'@radix-ui/react-select',
+    preview:`<div class="space-y-3"><div class="sh-select"><span>Выберите AGZS...</span><span>&#9660;</span></div><div class="sh-card p-2 w-48 text-sm"><div class="px-2 py-1.5 rounded bg-brand-50 text-brand-700">AGZS-42 Саратов</div><div class="px-2 py-1.5 rounded hover:bg-gray-100">AGZS-15 Энгельс</div><div class="px-2 py-1.5 rounded hover:bg-gray-100">AGZS-07 Балаково</div></div></div>`,
+    code:`import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@logaz/ui'
+
+<Select>
+  <SelectTrigger>
+    <SelectValue placeholder="Выберите AGZS..." />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="agzs-42">AGZS-42 Саратов</SelectItem>
+    <SelectItem value="agzs-15">AGZS-15 Энгельс</SelectItem>
+  </SelectContent>
+</Select>` },
+
+  // --- Extended: Fuel Hub + Card Mobile + Loyalty CRM (not AGZS) (41) ---
+  { name:'accordion', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Раскрывающиеся секции.', radix:'@radix-ui/react-accordion',
+    preview:`<div class="w-full max-w-sm"><div class="sh-accordion-item"><div class="sh-accordion-trigger">Как получить топливную карту?<span>&#9660;</span></div></div><div class="sh-accordion-item"><div class="sh-accordion-trigger">Тарифы на газомоторное топливо?<span>&#9654;</span></div></div><div class="sh-accordion-item"><div class="sh-accordion-trigger">Программа лояльности?<span>&#9654;</span></div></div></div>`,
+    code:`import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@logaz/ui'
+
+<Accordion type="single" collapsible>
+  <AccordionItem value="item-1">
+    <AccordionTrigger>Как получить топливную карту?</AccordionTrigger>
+    <AccordionContent>Оформите заявку на сайте или в мобильном приложении.</AccordionContent>
+  </AccordionItem>
+</Accordion>` },
+
+  { name:'alert', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Информационное уведомление.', radix:'\u2014',
+    preview:`<div class="space-y-3 w-full max-w-md"><div class="sh-alert border-blue-200 bg-blue-50"><span class="text-blue-600">&#9432;</span><div><div class="font-medium text-sm text-blue-800">Информация</div><div class="text-xs text-blue-600 mt-0.5">Баланс карты успешно пополнен.</div></div></div><div class="sh-alert border-red-200 bg-red-50"><span class="text-red-600">&#9888;</span><div><div class="font-medium text-sm text-red-800">Ошибка</div><div class="text-xs text-red-600 mt-0.5">Не удалось загрузить данные AGZS.</div></div></div></div>`,
+    code:`import { Alert, AlertTitle, AlertDescription } from '@logaz/ui'
+
+<Alert>
+  <AlertTitle>Информация</AlertTitle>
+  <AlertDescription>Баланс карты пополнен.</AlertDescription>
+</Alert>` },
+
+  { name:'alert-dialog', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Диалог подтверждения.', radix:'@radix-ui/react-alert-dialog',
+    preview:`<div class="w-full max-w-md sh-card p-6"><div class="font-semibold text-lg mb-1">Удалить карту?</div><div class="text-sm text-gray-500 mb-4">Это действие нельзя отменить. Карта будет деактивирована.</div><div class="flex gap-2 justify-end"><button class="sh-btn sh-btn-outline sh-btn-sm">Отмена</button><button class="sh-btn sh-btn-destructive sh-btn-sm">Удалить</button></div></div>`,
+    code:`import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogAction, AlertDialogCancel } from '@logaz/ui'
+
+<AlertDialog>
+  <AlertDialogTrigger>Удалить</AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogTitle>Удалить карту?</AlertDialogTitle>
+    <AlertDialogCancel>Отмена</AlertDialogCancel>
+    <AlertDialogAction>Удалить</AlertDialogAction>
+  </AlertDialogContent>
+</AlertDialog>` },
+
+  { name:'aspect-ratio', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Контейнер с фиксированным соотношением сторон.', radix:'@radix-ui/react-aspect-ratio',
+    preview:`<div class="w-48 bg-gray-200 rounded-lg overflow-hidden" style="aspect-ratio:16/9"><div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">16:9</div></div>`,
+    code:`import { AspectRatio } from '@logaz/ui'
+
+<AspectRatio ratio={16/9}>
+  <img src="/agzs.jpg" className="object-cover" />
+</AspectRatio>` },
+
+  { name:'avatar', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Аватар пользователя.', radix:'@radix-ui/react-avatar',
+    preview:`<div class="flex items-center gap-3"><div class="sh-avatar">ИП</div><div class="sh-avatar" style="background:#FB8607">АЗ</div><div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">?</div></div>`,
+    code:`import { Avatar, AvatarImage, AvatarFallback } from '@logaz/ui'
+
+<Avatar>
+  <AvatarImage src="/user.jpg" />
+  <AvatarFallback>ИП</AvatarFallback>
+</Avatar>` },
+
+  { name:'breadcrumb', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Хлебные крошки.', radix:'\u2014',
+    preview:`<div class="flex items-center gap-2 text-sm"><a class="text-brand-500 hover:underline" href="#">Главная</a><span class="text-gray-400">/</span><a class="text-brand-500 hover:underline" href="#">Карты</a><span class="text-gray-400">/</span><span class="text-gray-500">7700-1234</span></div>`,
+    code:`import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from '@logaz/ui'
+
+<Breadcrumb>
+  <BreadcrumbList>
+    <BreadcrumbItem><BreadcrumbLink href="/">Главная</BreadcrumbLink></BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>Карты</BreadcrumbItem>
+  </BreadcrumbList>
+</Breadcrumb>` },
+
+  { name:'calendar', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Календарь.', radix:'react-day-picker',
+    preview:`<div class="sh-card p-4 w-64 text-center"><div class="font-medium text-sm mb-3">Февраль 2026</div><div class="grid grid-cols-7 gap-1 text-xs"><span class="text-gray-400">Пн</span><span class="text-gray-400">Вт</span><span class="text-gray-400">Ср</span><span class="text-gray-400">Чт</span><span class="text-gray-400">Пт</span><span class="text-gray-400">Сб</span><span class="text-gray-400">Вс</span>${Array.from({length:28},(_,i)=>`<span class="p-1 rounded ${i===14?'bg-brand-500 text-white':'hover:bg-gray-100'} cursor-pointer">${i+1}</span>`).join('')}</div></div>`,
+    code:`import { Calendar } from '@logaz/ui'
+
+<Calendar
+  mode="single"
+  selected={date}
+  onSelect={setDate}
+/>` },
+
+  { name:'carousel', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Карусель.', radix:'embla-carousel-react', preview:`<div class="w-full max-w-sm flex items-center gap-2"><button class="sh-btn sh-btn-outline sh-btn-sm">&lsaquo;</button><div class="flex-1 bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400 text-sm">Слайд 1 / 5</div><button class="sh-btn sh-btn-outline sh-btn-sm">&rsaquo;</button></div>`, code:`import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@logaz/ui'\n\n<Carousel>\n  <CarouselContent>\n    <CarouselItem>Слайд 1</CarouselItem>\n  </CarouselContent>\n  <CarouselPrevious />\n  <CarouselNext />\n</Carousel>` },
+
+  { name:'chart', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Обёртка для Recharts.', radix:'recharts',
+    preview:`<div class="w-full max-w-sm bg-gray-50 rounded-lg p-4"><div class="text-xs text-gray-500 mb-2">Заправки по месяцам</div><div class="flex items-end gap-2 h-24"><div class="bg-brand-500 rounded-t w-8" style="height:80%"></div><div class="bg-brand-400 rounded-t w-8" style="height:50%"></div><div class="bg-brand-300 rounded-t w-8" style="height:35%"></div><div class="bg-accent-500 rounded-t w-8" style="height:60%"></div><div class="bg-accent-400 rounded-t w-8" style="height:20%"></div></div><div class="flex gap-2 text-[10px] text-gray-400 mt-1"><span class="w-8 text-center">Янв</span><span class="w-8 text-center">Фев</span><span class="w-8 text-center">Мар</span><span class="w-8 text-center">Апр</span><span class="w-8 text-center">Май</span></div></div>`,
+    code:`import { ChartContainer, ChartTooltip } from '@logaz/ui'
+import { BarChart, Bar, XAxis } from 'recharts'
+
+<ChartContainer config={config}>
+  <BarChart data={data}>
+    <XAxis dataKey="month" />
+    <Bar dataKey="refuels" />
+    <ChartTooltip />
+  </BarChart>
+</ChartContainer>` },
+
+  { name:'checkbox', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Чекбокс.', radix:'@radix-ui/react-checkbox', preview:`<div class="space-y-2"><label class="flex items-center gap-2"><input type="checkbox" class="sh-checkbox" checked /><span class="text-sm">Email-уведомления</span></label><label class="flex items-center gap-2"><input type="checkbox" class="sh-checkbox" /><span class="text-sm">SMS-уведомления</span></label></div>`, code:`import { Checkbox } from '@logaz/ui'\n\n<div className="flex items-center gap-2">\n  <Checkbox id="terms" />\n  <Label htmlFor="terms">Согласен с условиями</Label>\n</div>` },
+
+  { name:'collapsible', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Сворачиваемый блок.', radix:'@radix-ui/react-collapsible', preview:`<div class="w-full max-w-sm border rounded-lg p-3"><div class="flex items-center justify-between"><span class="text-sm font-medium">Дополнительные параметры</span><span class="text-xs text-brand-500 cursor-pointer">Развернуть &#9660;</span></div></div>`, code:`import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@logaz/ui'\n\n<Collapsible>\n  <CollapsibleTrigger>Дополнительно</CollapsibleTrigger>\n  <CollapsibleContent>Контент</CollapsibleContent>\n</Collapsible>` },
+
+  { name:'command', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Command palette / поиск.', radix:'cmdk', preview:`<div class="w-full max-w-sm sh-card"><div class="p-3 border-b"><input class="sh-input" placeholder="Поиск AGZS, клиентов..." /></div><div class="p-2 text-sm"><div class="px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer">AGZS-42 Саратов</div><div class="px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer">Клиент: Иванов И.П.</div></div></div>`, code:`import { Command, CommandInput, CommandList, CommandItem } from '@logaz/ui'\n\n<Command>\n  <CommandInput placeholder="Поиск..." />\n  <CommandList>\n    <CommandItem>AGZS-42</CommandItem>\n  </CommandList>\n</Command>` },
+
+  { name:'context-menu', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Контекстное меню (ПКМ).', radix:'@radix-ui/react-context-menu', preview:`<div class="sh-card p-2 w-48 text-sm"><div class="px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer">Копировать</div><div class="px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer">Экспорт</div><div class="sh-separator my-1"></div><div class="px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer text-red-600">Удалить</div></div>`, code:`import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from '@logaz/ui'\n\n<ContextMenu>\n  <ContextMenuTrigger>Правый клик</ContextMenuTrigger>\n  <ContextMenuContent>\n    <ContextMenuItem>Копировать</ContextMenuItem>\n  </ContextMenuContent>\n</ContextMenu>` },
+
+  { name:'dialog', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Модальное окно с overlay.', radix:'@radix-ui/react-dialog', preview:`<div class="w-full max-w-md sh-card p-6 relative"><div class="absolute top-3 right-3 text-gray-400 cursor-pointer">&times;</div><div class="font-semibold text-lg mb-1">Новая заправка</div><div class="text-sm text-gray-500 mb-4">Добавьте данные о заправке на AGZS.</div><div class="flex gap-2 justify-end"><button class="sh-btn sh-btn-outline sh-btn-sm">Отмена</button><button class="sh-btn sh-btn-primary sh-btn-sm">Сохранить</button></div></div>`, code:`import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@logaz/ui'\n\n<Dialog>\n  <DialogTrigger asChild><Button>Открыть</Button></DialogTrigger>\n  <DialogContent>\n    <DialogHeader><DialogTitle>Новая заправка</DialogTitle></DialogHeader>\n    <DialogFooter><Button>Сохранить</Button></DialogFooter>\n  </DialogContent>\n</Dialog>` },
+
+  { name:'drawer', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Выезжающая панель снизу (мобильная).', radix:'vaul', preview:`<div class="w-full max-w-sm"><div class="bg-gray-100 rounded-t-xl p-2 flex justify-center"><div class="w-12 h-1 bg-gray-300 rounded-full"></div></div><div class="bg-white border rounded-b-xl p-4"><div class="font-medium text-sm mb-2">Фильтры</div><div class="text-xs text-gray-500">Мобильная панель для фильтрации.</div></div></div>`, code:`import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from '@logaz/ui'\n\n<Drawer>\n  <DrawerTrigger>Фильтры</DrawerTrigger>\n  <DrawerContent>\n    <DrawerHeader><DrawerTitle>Фильтры</DrawerTitle></DrawerHeader>\n  </DrawerContent>\n</Drawer>` },
+
+  { name:'dropdown-menu', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Выпадающее меню.', radix:'@radix-ui/react-dropdown-menu', preview:`<div class="flex items-start gap-4"><button class="sh-btn sh-btn-outline sh-btn-sm">Меню &#9660;</button><div class="sh-card p-2 w-48 text-sm"><div class="px-2 py-1.5 rounded hover:bg-gray-100">Профиль</div><div class="px-2 py-1.5 rounded hover:bg-gray-100">Настройки</div><div class="sh-separator my-1"></div><div class="px-2 py-1.5 rounded hover:bg-gray-100 text-red-600">Выйти</div></div></div>`, code:`import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@logaz/ui'\n\n<DropdownMenu>\n  <DropdownMenuTrigger asChild><Button variant="outline">Меню</Button></DropdownMenuTrigger>\n  <DropdownMenuContent>\n    <DropdownMenuItem>Профиль</DropdownMenuItem>\n    <DropdownMenuItem>Выйти</DropdownMenuItem>\n  </DropdownMenuContent>\n</DropdownMenu>` },
+
+  { name:'form', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Form + React Hook Form интеграция.', radix:'react-hook-form + @hookform/resolvers', preview:`<div class="w-full max-w-sm space-y-3"><div><label class="sh-label">Имя</label><input class="sh-input mt-1" placeholder="Иванов Иван" /></div><div><label class="sh-label">Телефон</label><input class="sh-input mt-1" placeholder="+7 900 123-45-67" /><div class="text-xs text-red-500 mt-1">Обязательное поле</div></div><button class="sh-btn sh-btn-primary w-full mt-2">Отправить</button></div>`, code:`import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@logaz/ui'\n\nconst form = useForm({ resolver: zodResolver(schema) })\n\n<Form {...form}>\n  <FormField control={form.control} name="phone" render={({ field }) => (\n    <FormItem>\n      <FormLabel>Телефон</FormLabel>\n      <FormControl><Input {...field} /></FormControl>\n      <FormMessage />\n    </FormItem>\n  )} />\n</Form>` },
+
+  { name:'hover-card', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Карточка при наведении.', radix:'@radix-ui/react-hover-card', preview:`<div class="flex items-start gap-3"><a class="text-brand-500 underline text-sm" href="#">AGZS-42</a><div class="sh-card p-3 w-56"><div class="text-sm font-medium">Саратов, ул. Газовая 15</div><div class="text-xs text-gray-500 mt-1">CNG &middot; LNG &middot; 24/7</div></div></div>`, code:`import { HoverCard, HoverCardTrigger, HoverCardContent } from '@logaz/ui'\n\n<HoverCard>\n  <HoverCardTrigger>AGZS-42</HoverCardTrigger>\n  <HoverCardContent>\n    <p>Саратов, ул. Газовая 15</p>\n  </HoverCardContent>\n</HoverCard>` },
+
+  { name:'input-otp', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'OTP ввод (код подтверждения).', radix:'input-otp', preview:`<div class="flex gap-2">${Array.from({length:6},(_,i)=>`<input class="sh-input w-10 h-10 text-center font-semibold" maxlength="1" value="${i<3?[4,2,7][i]:''}" />`).join('')}</div>`, code:`import { InputOTP, InputOTPGroup, InputOTPSlot } from '@logaz/ui'\n\n<InputOTP maxLength={6}>\n  <InputOTPGroup>\n    <InputOTPSlot index={0} />\n    <InputOTPSlot index={1} />\n  </InputOTPGroup>\n</InputOTP>` },
+
+  { name:'label', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Подпись для элементов формы.', radix:'@radix-ui/react-label', preview:`<div class="space-y-1 w-full max-w-sm"><label class="sh-label">Email</label><input class="sh-input" placeholder="user@logazsv.pro" /></div>`, code:`import { Label } from '@logaz/ui'\n\n<Label htmlFor="email">Email</Label>\n<Input id="email" placeholder="user@logazsv.pro" />` },
+
+  { name:'menubar', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Горизонтальная панель меню.', radix:'@radix-ui/react-menubar', preview:`<div class="flex border rounded-lg p-1 gap-1"><div class="px-3 py-1 text-sm rounded hover:bg-gray-100 cursor-pointer">Файл</div><div class="px-3 py-1 text-sm rounded bg-gray-100 cursor-pointer">Отчёты</div><div class="px-3 py-1 text-sm rounded hover:bg-gray-100 cursor-pointer">Настройки</div></div>`, code:`import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem } from '@logaz/ui'\n\n<Menubar>\n  <MenubarMenu>\n    <MenubarTrigger>Файл</MenubarTrigger>\n    <MenubarContent>\n      <MenubarItem>Экспорт</MenubarItem>\n    </MenubarContent>\n  </MenubarMenu>\n</Menubar>` },
+
+  { name:'navigation-menu', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Навигационное меню.', radix:'@radix-ui/react-navigation-menu', preview:`<div class="flex gap-4 text-sm"><a class="font-medium text-brand-500" href="#">Панель</a><a class="text-gray-600 hover:text-brand-500" href="#">Карты</a><a class="text-gray-600 hover:text-brand-500" href="#">Транзакции</a><a class="text-gray-600 hover:text-brand-500" href="#">Отчёты</a></div>`, code:`import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from '@logaz/ui'\n\n<NavigationMenu>\n  <NavigationMenuList>\n    <NavigationMenuItem>\n      <NavigationMenuLink href="/cards">Карты</NavigationMenuLink>\n    </NavigationMenuItem>\n  </NavigationMenuList>\n</NavigationMenu>` },
+
+  { name:'pagination', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Пагинация (стандартная shadcn/ui).', radix:'\u2014', preview:`<div class="flex items-center gap-1"><button class="sh-btn sh-btn-ghost sh-btn-sm">&laquo;</button><button class="sh-btn sh-btn-ghost sh-btn-sm">&lsaquo;</button><button class="sh-btn sh-btn-primary sh-btn-sm">1</button><button class="sh-btn sh-btn-ghost sh-btn-sm">2</button><button class="sh-btn sh-btn-ghost sh-btn-sm">3</button><button class="sh-btn sh-btn-ghost sh-btn-sm">&rsaquo;</button><button class="sh-btn sh-btn-ghost sh-btn-sm">&raquo;</button></div>`, code:`import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@logaz/ui'\n\n<Pagination>\n  <PaginationContent>\n    <PaginationPrevious href="#" />\n    <PaginationLink href="#" isActive>1</PaginationLink>\n    <PaginationLink href="#">2</PaginationLink>\n    <PaginationNext href="#" />\n  </PaginationContent>\n</Pagination>` },
+
+  { name:'popover', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Всплывающая панель.', radix:'@radix-ui/react-popover', preview:`<div class="flex items-start gap-4"><button class="sh-btn sh-btn-outline sh-btn-sm">Фильтр</button><div class="sh-card p-4 w-64"><div class="text-sm font-medium mb-2">Фильтры</div><div class="space-y-2"><label class="flex items-center gap-2"><input type="checkbox" class="sh-checkbox" checked /><span class="text-xs">CNG</span></label><label class="flex items-center gap-2"><input type="checkbox" class="sh-checkbox" /><span class="text-xs">LNG</span></label></div></div></div>`, code:`import { Popover, PopoverTrigger, PopoverContent } from '@logaz/ui'\n\n<Popover>\n  <PopoverTrigger asChild><Button variant="outline">Фильтр</Button></PopoverTrigger>\n  <PopoverContent>Контент</PopoverContent>\n</Popover>` },
+
+  { name:'progress', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Прогресс-бар.', radix:'@radix-ui/react-progress', preview:`<div class="space-y-4 w-full max-w-sm"><div><div class="text-xs text-gray-500 mb-1">25%</div><div class="sh-progress"><div class="sh-progress-bar" style="width:25%"></div></div></div><div><div class="text-xs text-gray-500 mb-1">66%</div><div class="sh-progress"><div class="sh-progress-bar" style="width:66%"></div></div></div></div>`, code:`import { Progress } from '@logaz/ui'\n\n<Progress value={66} />` },
+
+  { name:'radio-group', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Группа радио-кнопок.', radix:'@radix-ui/react-radio-group', preview:`<div class="space-y-2"><label class="flex items-center gap-2"><input type="radio" name="fuel" class="sh-radio" checked /><span class="text-sm">CNG</span></label><label class="flex items-center gap-2"><input type="radio" name="fuel" class="sh-radio" /><span class="text-sm">LNG</span></label><label class="flex items-center gap-2"><input type="radio" name="fuel" class="sh-radio" /><span class="text-sm">LPG</span></label></div>`, code:`import { RadioGroup, RadioGroupItem } from '@logaz/ui'\n\n<RadioGroup defaultValue="cng">\n  <div className="flex items-center gap-2">\n    <RadioGroupItem value="cng" id="r1" />\n    <Label htmlFor="r1">CNG</Label>\n  </div>\n</RadioGroup>` },
+
+  { name:'resizable', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Панели с изменяемым размером.', radix:'react-resizable-panels', preview:`<div class="flex border rounded-lg overflow-hidden h-24"><div class="flex-1 bg-gray-50 p-3 text-xs text-gray-500">Панель 1</div><div class="w-1 bg-gray-300 cursor-col-resize hover:bg-brand-400"></div><div class="w-24 bg-gray-50 p-3 text-xs text-gray-500">Панель 2</div></div>`, code:`import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@logaz/ui'\n\n<ResizablePanelGroup direction="horizontal">\n  <ResizablePanel>Панель 1</ResizablePanel>\n  <ResizableHandle />\n  <ResizablePanel>Панель 2</ResizablePanel>\n</ResizablePanelGroup>` },
+
+  { name:'scroll-area', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Скроллируемая область.', radix:'@radix-ui/react-scroll-area', preview:`<div class="w-48 h-32 border rounded-lg overflow-hidden relative"><div class="p-3 text-xs space-y-1">${Array.from({length:12},(_,i)=>`<div>AGZS-${String(i+1).padStart(2,'0')}</div>`).join('')}</div><div class="absolute right-0.5 top-0.5 bottom-0.5 w-1.5 bg-gray-200 rounded-full"><div class="w-1.5 h-8 bg-gray-400 rounded-full"></div></div></div>`, code:`import { ScrollArea } from '@logaz/ui'\n\n<ScrollArea className="h-48">\n  {items.map(item => <div key={item}>{item}</div>)}\n</ScrollArea>` },
+
+  { name:'separator', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Горизонтальный или вертикальный разделитель.', radix:'@radix-ui/react-separator', preview:`<div class="w-full max-w-sm space-y-3"><div class="text-sm">Секция 1</div><div class="sh-separator"></div><div class="text-sm">Секция 2</div></div>`, code:`import { Separator } from '@logaz/ui'\n\n<Separator />` },
+
+  { name:'sheet', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Боковая панель (slide-over).', radix:'@radix-ui/react-dialog', preview:`<div class="flex gap-3"><div class="flex-1 bg-gray-100 rounded-lg p-4 text-xs text-gray-400 text-center">Основной контент</div><div class="w-48 sh-card p-4 border-l-2 border-brand-500"><div class="font-medium text-sm mb-2">Детали карты</div><div class="text-xs text-gray-500">Информация о топливной карте</div></div></div>`, code:`import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from '@logaz/ui'\n\n<Sheet>\n  <SheetTrigger asChild><Button>Детали</Button></SheetTrigger>\n  <SheetContent>\n    <SheetHeader><SheetTitle>Детали карты</SheetTitle></SheetHeader>\n  </SheetContent>\n</Sheet>` },
+
+  { name:'sidebar', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Боковая навигация.', radix:'\u2014', preview:`<div class="flex h-32"><div class="w-48 bg-brand-900 text-white p-3 rounded-l-lg"><div class="text-xs font-semibold text-brand-300 mb-2">LOGAZ</div><div class="text-sm py-1 px-2 rounded bg-accent-500 mb-1">Панель</div><div class="text-sm py-1 px-2 rounded hover:bg-brand-800 mb-1 text-brand-200">Карты</div><div class="text-sm py-1 px-2 rounded hover:bg-brand-800 text-brand-200">Отчёты</div></div><div class="flex-1 bg-gray-50 p-3 rounded-r-lg text-xs text-gray-400">Контент</div></div>`, code:`import { Sidebar, SidebarContent, SidebarGroup, SidebarMenuItem } from '@logaz/ui'\n\n<SidebarProvider>\n  <Sidebar>\n    <SidebarContent>\n      <SidebarGroup>\n        <SidebarMenuItem>Панель</SidebarMenuItem>\n        <SidebarMenuItem>Карты</SidebarMenuItem>\n      </SidebarGroup>\n    </SidebarContent>\n  </Sidebar>\n</SidebarProvider>` },
+
+  { name:'slider', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Ползунок.', radix:'@radix-ui/react-slider', preview:`<div class="space-y-4 w-full max-w-sm"><div class="text-xs text-gray-500">Объём: 50-200 л</div><div class="sh-slider"><div style="position:absolute;left:0;width:60%;height:100%;background:#3B55A2;border-radius:4px"></div><div class="sh-slider-thumb" style="left:20%"></div><div class="sh-slider-thumb" style="left:60%"></div></div></div>`, code:`import { Slider } from '@logaz/ui'\n\n<Slider defaultValue={[50, 200]} min={0} max={500} step={10} />` },
+
+  { name:'sonner', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Toast-уведомления (Sonner).', radix:'sonner', preview:`<div class="space-y-2 w-full max-w-sm"><div class="sh-card p-3 flex items-center gap-3 border-l-4 border-green-500"><span class="text-green-600">&#10003;</span><div class="text-sm">Карта успешно активирована</div></div><div class="sh-card p-3 flex items-center gap-3 border-l-4 border-red-500"><span class="text-red-600">&#10007;</span><div class="text-sm">Ошибка при заправке</div></div></div>`, code:`import { toast } from 'sonner'\nimport { Sonner as Toaster } from '@logaz/ui'\n\n// В layout:\n<Toaster />\n\n// Вызов:\ntoast.success('Карта активирована')\ntoast.error('Ошибка при заправке')` },
+
+  { name:'switch', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Переключатель.', radix:'@radix-ui/react-switch', preview:`<div class="space-y-3"><label class="flex items-center gap-3"><div class="sh-switch active" onclick="this.classList.toggle('active')"></div><span class="text-sm">Уведомления</span></label><label class="flex items-center gap-3"><div class="sh-switch" onclick="this.classList.toggle('active')"></div><span class="text-sm">Тёмная тема</span></label></div>`, code:`import { Switch } from '@logaz/ui'\n\n<div className="flex items-center gap-2">\n  <Switch id="notifications" />\n  <Label htmlFor="notifications">Уведомления</Label>\n</div>` },
+
+  { name:'tabs', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Переключение по вкладкам.', radix:'@radix-ui/react-tabs', preview:`<div class="w-full max-w-sm"><div class="sh-tabs"><div class="sh-tab active">Транзакции</div><div class="sh-tab">Бонусы</div><div class="sh-tab">Статистика</div></div><div class="p-4 text-sm text-gray-600 border border-t-0 rounded-b-lg">Список транзакций</div></div>`, code:`import { Tabs, TabsList, TabsTrigger, TabsContent } from '@logaz/ui'\n\n<Tabs defaultValue="transactions">\n  <TabsList>\n    <TabsTrigger value="transactions">Транзакции</TabsTrigger>\n    <TabsTrigger value="bonuses">Бонусы</TabsTrigger>\n  </TabsList>\n  <TabsContent value="transactions">Список</TabsContent>\n</Tabs>` },
+
+  { name:'textarea', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Многострочное поле ввода.', radix:'\u2014', preview:`<div class="w-full max-w-sm"><textarea class="sh-textarea" placeholder="Комментарий к заявке...">Требуется обслуживание колонки #3</textarea></div>`, code:`import { Textarea } from '@logaz/ui'\n\n<Textarea placeholder="Комментарий..." />` },
+
+  { name:'toast', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Toast (Radix версия).', radix:'@radix-ui/react-toast', preview:`<div class="sh-card p-4 w-full max-w-sm flex justify-between items-start"><div><div class="font-medium text-sm">Уведомление</div><div class="text-xs text-gray-500 mt-0.5">Данные сохранены.</div></div><button class="text-gray-400 hover:text-gray-600">&times;</button></div>`, code:`import { useToast } from '@logaz/ui'\n\nconst { toast } = useToast()\ntoast({ title: 'Сохранено', description: 'Данные обновлены.' })` },
+
+  { name:'toaster', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Контейнер для toast.', radix:'@radix-ui/react-toast', preview:`<div class="text-sm text-gray-500 text-center p-4">Toaster \u2014 провайдер. Размещается в корневом layout.</div>`, code:`import { Toaster } from '@logaz/ui'\n\n// В App.tsx:\n<Toaster />` },
+
+  { name:'toggle', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Кнопка-переключатель.', radix:'@radix-ui/react-toggle', preview:`<div class="flex gap-2"><div class="sh-toggle active" onclick="this.classList.toggle('active')"><b>B</b></div><div class="sh-toggle" onclick="this.classList.toggle('active')"><i>I</i></div><div class="sh-toggle" onclick="this.classList.toggle('active')"><u>U</u></div></div>`, code:`import { Toggle } from '@logaz/ui'\n\n<Toggle aria-label="Bold"><Bold className="h-4 w-4" /></Toggle>` },
+
+  { name:'toggle-group', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Группа toggle-кнопок.', radix:'@radix-ui/react-toggle-group', preview:`<div class="flex border rounded-lg overflow-hidden"><div class="sh-toggle active rounded-none border-0 border-r" style="background:#f1f5f9">CNG</div><div class="sh-toggle rounded-none border-0 border-r">LNG</div><div class="sh-toggle rounded-none border-0">LPG</div></div>`, code:`import { ToggleGroup, ToggleGroupItem } from '@logaz/ui'\n\n<ToggleGroup type="single" defaultValue="cng">\n  <ToggleGroupItem value="cng">CNG</ToggleGroupItem>\n  <ToggleGroupItem value="lng">LNG</ToggleGroupItem>\n</ToggleGroup>` },
+
+  { name:'tooltip', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Подсказка при наведении.', radix:'@radix-ui/react-tooltip', preview:`<div class="sh-tooltip"><div class="sh-tooltip-content">Добавить заправку</div><button class="sh-btn sh-btn-outline sh-btn-sm">+ Заправка</button></div>`, code:`import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@logaz/ui'\n\n<TooltipProvider>\n  <Tooltip>\n    <TooltipTrigger asChild><Button>+ Заправка</Button></TooltipTrigger>\n    <TooltipContent>Добавить заправку</TooltipContent>\n  </Tooltip>\n</TooltipProvider>` },
+
+  // --- Custom: project-specific, NOT in DS (27) ---
+  // Fuel Hub custom (10)
+  { name:'error-handler', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Обработчик ошибок для Fuel Hub.', radix:'\u2014', preview:`<div class="sh-alert border-red-200 bg-red-50 w-full max-w-md"><span class="text-red-600">&#9888;</span><div><div class="font-medium text-sm text-red-800">Error Handler</div><div class="text-xs text-red-600">Fuel Hub specific error handling component</div></div></div>`, code:`// src/components/ui/error-handler.tsx\n// Fuel Hub specific - not in @logaz/ui` },
+
+  { name:'GlobalErrorBoundary', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Global Error Boundary для Fuel Hub.', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Error Boundary \u2014 перехватывает ошибки рендеринга.</div>`, code:`// src/components/ui/GlobalErrorBoundary.tsx\n// Fuel Hub specific` },
+
+  { name:'inline-spinner', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Инлайн-спиннер загрузки (Fuel Hub).', radix:'\u2014', preview:`<div class="flex items-center gap-2"><div class="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div><span class="text-sm text-gray-600">Загрузка...</span></div>`, code:`// src/components/ui/inline-spinner.tsx\n// Fuel Hub specific` },
+
+  { name:'loading-overlay (FH)', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Overlay загрузки (Fuel Hub).', radix:'\u2014', preview:`<div class="w-full h-24 bg-gray-50/80 rounded-lg flex items-center justify-center"><div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>`, code:`// src/components/ui/loading-overlay.tsx\n// Fuel Hub specific` },
+
+  { name:'multi-select', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Мультиселект (Fuel Hub).', radix:'\u2014', preview:`<div class="sh-select"><div class="flex gap-1"><span class="sh-badge sh-badge-secondary text-xs">CNG</span><span class="sh-badge sh-badge-secondary text-xs">LNG</span></div><span>&#9660;</span></div>`, code:`// src/components/ui/multi-select.tsx\n// Fuel Hub specific` },
+
+  { name:'responsive-table (FH)', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Адаптивная таблица (Fuel Hub).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Responsive Table \u2014 адаптируется под мобильные.</div>`, code:`// src/components/ui/responsive-table.tsx\n// Fuel Hub specific` },
+
+  { name:'skeleton-variants', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Варианты скелетонов (Fuel Hub).', radix:'\u2014', preview:`<div class="space-y-2 w-full max-w-sm"><div class="sh-skeleton h-8 w-full"></div><div class="flex gap-2"><div class="sh-skeleton h-20 w-20 rounded"></div><div class="flex-1 space-y-2"><div class="sh-skeleton h-3 w-full"></div><div class="sh-skeleton h-3 w-3/4"></div></div></div></div>`, code:`// src/components/ui/skeleton-variants.tsx\n// Fuel Hub specific` },
+
+  { name:'spinner (FH)', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Спиннер (Fuel Hub).', radix:'\u2014', preview:`<div class="flex gap-3"><div class="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div><div class="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin"></div></div>`, code:`// src/components/ui/spinner.tsx\n// Fuel Hub specific` },
+
+  { name:'virtualized-responsive-table', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Виртуализованная адаптивная таблица (Fuel Hub).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Virtualized Responsive Table \u2014 для больших датасетов.</div>`, code:`// src/components/ui/virtualized-responsive-table.tsx\n// Fuel Hub specific` },
+
+  { name:'virtualized-table (FH)', ds:false, fuelhub:'custom', cardmobile:false, loyalty:false, agzs:false, level:'custom', desc:'Виртуализованная таблица (Fuel Hub).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Virtualized Table \u2014 рендер тысяч строк.</div>`, code:`// src/components/ui/virtualized-table.tsx\n// Fuel Hub specific` },
+
+  // Loyalty CRM custom (14)
+  { name:'AdaptiveContainer', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Адаптивный контейнер (Loyalty CRM).', radix:'\u2014', preview:`<div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-xs text-gray-400">Adaptive Container \u2014 responsive layout wrapper</div>`, code:`// src/components/ui/AdaptiveContainer.tsx\n// Loyalty CRM specific` },
+
+  { name:'charts (CRM)', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Графики (Loyalty CRM).', radix:'recharts', preview:`<div class="w-full max-w-sm bg-gray-50 rounded-lg p-4"><div class="text-xs text-gray-500 mb-2">Активность клиентов</div><div class="flex items-end gap-1 h-16">${Array.from({length:12},(_,i)=>`<div class="bg-brand-${300+Math.floor(Math.random()*3)*100} rounded-t flex-1" style="height:${20+Math.floor(Math.random()*80)}%"></div>`).join('')}</div></div>`, code:`// src/components/ui/charts.tsx\n// Loyalty CRM specific` },
+
+  { name:'date-range-picker', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Выбор периода дат (Loyalty CRM).', radix:'react-day-picker', preview:`<div class="sh-select w-64"><span class="text-sm">01.02.2026 \u2014 15.02.2026</span><span>&#128197;</span></div>`, code:`// src/components/ui/date-range-picker.tsx\n// Loyalty CRM specific` },
+
+  { name:'lazy-component', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Lazy-loaded компонент (Loyalty CRM).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Lazy Component \u2014 загрузка по требованию с Suspense.</div>`, code:`// src/components/ui/lazy-component.tsx\n// Loyalty CRM specific` },
+
+  { name:'loading-overlay (CRM)', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Overlay загрузки (Loyalty CRM).', radix:'\u2014', preview:`<div class="w-full h-24 bg-gray-50/80 rounded-lg flex items-center justify-center"><div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>`, code:`// src/components/ui/loading-overlay.tsx\n// Loyalty CRM specific` },
+
+  { name:'performance-wrapper', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Performance wrapper (Loyalty CRM).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Performance Wrapper \u2014 оптимизация рендеринга.</div>`, code:`// src/components/ui/performance-wrapper.tsx\n// Loyalty CRM specific` },
+
+  { name:'recharts-charts', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Recharts-графики (Loyalty CRM).', radix:'recharts', preview:`<div class="text-sm text-gray-500 text-center p-4">Recharts Charts \u2014 кастомные графики для CRM аналитики.</div>`, code:`// src/components/ui/recharts-charts.tsx\n// Loyalty CRM specific` },
+
+  { name:'ResponsiveTableImproved', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Улучшенная адаптивная таблица (Loyalty CRM).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Responsive Table Improved \u2014 CRM version.</div>`, code:`// src/components/ui/ResponsiveTableImproved.tsx\n// Loyalty CRM specific` },
+
+  { name:'spinner (CRM)', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Спиннер (Loyalty CRM).', radix:'\u2014', preview:`<div class="flex gap-3"><div class="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>`, code:`// src/components/ui/spinner.tsx\n// Loyalty CRM specific` },
+
+  { name:'UnifiedMetricCard', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Карточка метрики (Loyalty CRM).', radix:'\u2014', preview:`<div class="sh-card p-4 w-48"><div class="text-xs text-gray-500">Активные карты</div><div class="text-2xl font-bold text-brand-500 mt-1">1 247</div><div class="text-xs text-green-600 mt-1">+12% за месяц</div></div>`, code:`// src/components/ui/UnifiedMetricCard.tsx\n// Loyalty CRM specific` },
+
+  { name:'UnifiedPagination', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Кастомная пагинация (Loyalty CRM).', radix:'\u2014', preview:`<div class="flex items-center gap-2 text-sm"><span class="text-gray-500">Показано 1-20 из 156</span><div class="flex gap-1 ml-4"><button class="sh-btn sh-btn-outline sh-btn-sm">&lsaquo;</button><button class="sh-btn sh-btn-primary sh-btn-sm">1</button><button class="sh-btn sh-btn-outline sh-btn-sm">2</button><button class="sh-btn sh-btn-outline sh-btn-sm">&rsaquo;</button></div></div>`, code:`// src/components/ui/UnifiedPagination.tsx\n// Loyalty CRM specific` },
+
+  { name:'UnifiedStatsCard', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Карточка статистики (Loyalty CRM).', radix:'\u2014', preview:`<div class="sh-card p-4 w-48"><div class="text-xs text-gray-500">Транзакции</div><div class="text-2xl font-bold text-accent-500 mt-1">3 892</div><div class="text-xs text-gray-400 mt-1">За текущий месяц</div></div>`, code:`// src/components/ui/UnifiedStatsCard.tsx\n// Loyalty CRM specific` },
+
+  { name:'virtual-transaction-table', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Виртуализованная таблица транзакций (Loyalty CRM).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Virtual Transaction Table \u2014 10K+ строк.</div>`, code:`// src/components/ui/virtual-transaction-table.tsx\n// Loyalty CRM specific` },
+
+  { name:'virtualized-table (CRM)', ds:false, fuelhub:false, cardmobile:false, loyalty:'custom', agzs:false, level:'custom', desc:'Виртуализованная таблица (Loyalty CRM).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Virtualized Table \u2014 CRM version.</div>`, code:`// src/components/ui/virtualized-table.tsx\n// Loyalty CRM specific` },
+
+  // AGZS Public custom (3)
+  { name:'pagination (AGZS)', ds:false, fuelhub:false, cardmobile:false, loyalty:false, agzs:'custom', level:'custom', desc:'Кастомная пагинация с currentPage/totalPages (AGZS Public).', radix:'\u2014', preview:`<div class="flex items-center gap-2 text-sm"><span class="text-gray-500">Показано 1-10 из 42</span><div class="flex gap-1 ml-4"><button class="sh-btn sh-btn-outline sh-btn-sm">&lsaquo;&lsaquo;</button><button class="sh-btn sh-btn-outline sh-btn-sm">&lsaquo;</button><button class="sh-btn sh-btn-primary sh-btn-sm">1</button><button class="sh-btn sh-btn-outline sh-btn-sm">2</button><button class="sh-btn sh-btn-outline sh-btn-sm">...</button><button class="sh-btn sh-btn-outline sh-btn-sm">5</button><button class="sh-btn sh-btn-outline sh-btn-sm">&rsaquo;</button><button class="sh-btn sh-btn-outline sh-btn-sm">&rsaquo;&rsaquo;</button></div></div>`, code:`// src/components/ui/pagination.tsx\n// AGZS Public specific - custom Pagination with\n// currentPage, totalPages, totalItems, itemsPerPage props\n// NOT standard shadcn/ui Pagination` },
+
+  { name:'responsive-table (AGZS)', ds:false, fuelhub:false, cardmobile:false, loyalty:false, agzs:'custom', level:'custom', desc:'Адаптивная таблица (AGZS Public).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Responsive Table \u2014 AGZS version.</div>`, code:`// src/components/ui/responsive-table.tsx\n// AGZS Public specific` },
+
+  { name:'virtualized-responsive-table (AGZS)', ds:false, fuelhub:false, cardmobile:false, loyalty:false, agzs:'custom', level:'custom', desc:'Виртуализованная адаптивная таблица (AGZS Public).', radix:'\u2014', preview:`<div class="text-sm text-gray-500 text-center p-4">Virtualized Responsive Table \u2014 AGZS version.</div>`, code:`// src/components/ui/virtualized-responsive-table.tsx\n// AGZS Public specific` },
+];
+
+const LEVEL_LABELS = { core:{label:'Общие (4/4)',cls:'level-core'}, extended:{label:'Общие (3/4)',cls:'level-extended'}, custom:{label:'Локальный',cls:'level-custom'} };
+const ACTION_MAP = { core:'&#10003; В @logaz/ui (все проекты)', extended:'&#10003; В @logaz/ui (без AGZS)', custom:'Локальный компонент' };
+
+// ==================== AUDIT TABLE ====================
+function cellHTML(val) {
+  if (val === 'custom') return '<td class="text-center px-3 py-2 cell-custom"><span class="font-medium text-xs">Custom</span></td>';
+  if (val === true) return '<td class="text-center px-3 py-2 cell-yes"><span class="font-medium text-xs">Local</span></td>';
+  if (val === false) return '<td class="text-center px-3 py-2 cell-no">&mdash;</td>';
+  if (val === 'reexport') return '<td class="text-center px-3 py-2 cell-reexport"><span class="font-medium text-xs">Re-exp</span></td>';
+  return '<td class="text-center px-3 py-2 cell-no">&mdash;</td>';
+}
+
+function renderTable(filter) {
+  const tbody = document.getElementById('tableBody');
+  const filtered = filter === 'all' ? COMPONENTS : filter === 'ds' ? COMPONENTS.filter(c => c.ds) : COMPONENTS.filter(c => c.level === filter);
+  tbody.innerHTML = filtered.map(c => {
+    const lev = LEVEL_LABELS[c.level];
+    return `<tr class="border-b border-gray-100 comp-row" onclick="openModal('${c.name}')">
+      <td class="px-4 py-2 font-mono text-xs font-medium">${c.name}</td>
+      <td class="text-center px-3 py-2 ${c.ds ? 'cell-migrated' : 'cell-no'}">${c.ds ? '&#10003;' : '&mdash;'}</td>
+      ${cellHTML(c.fuelhub)}${cellHTML(c.cardmobile)}${cellHTML(c.loyalty)}${cellHTML(c.agzs)}
+      <td class="px-4 py-2"><span class="level-chip ${lev.cls}">${lev.label}</span></td>
+      <td class="px-4 py-2 text-xs text-gray-500">${ACTION_MAP[c.level]}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(filter) {
+  document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('filter-active'); if(b.dataset.filter===filter) b.classList.add('filter-active'); });
+  renderTable(filter);
+}
+
+// ==================== GALLERY ====================
+function renderGallery(filter) {
+  const container = document.getElementById('galleryContainer');
+  const filtered = filter === 'all' ? COMPONENTS : filter === 'ds' ? COMPONENTS.filter(c => c.ds) : COMPONENTS.filter(c => c.level === filter);
+  container.innerHTML = filtered.map(c => {
+    const lev = LEVEL_LABELS[c.level];
+    return `<div class="bg-white rounded-lg shadow-sm border mb-6 overflow-hidden" id="gal-${c.name}">
+      <div class="flex items-center justify-between px-6 py-3 border-b bg-gray-50">
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-sm font-semibold">${c.name}</span>
+          <span class="level-chip ${lev.cls}">${lev.label}</span>
+          <span class="text-xs text-gray-400">${c.radix}</span>
+        </div>
+        <button onclick="openModal('${c.name}')" class="text-xs text-brand-500 hover:underline">Подробнее</button>
+      </div>
+      <div class="grid md:grid-cols-2">
+        <div class="p-6 border-r">
+          <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-3">Preview</div>
+          <div class="preview-box">${c.preview}</div>
+        </div>
+        <div class="p-6">
+          <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-3">Usage</div>
+          <div class="code-block"><pre><code class="language-typescript">${escapeHtml(c.code)}</code></pre></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.code-block code').forEach(el => hljs.highlightElement(el));
+}
+
+function filterGallery(filter) {
+  document.querySelectorAll('.gal-btn').forEach(b => { b.classList.remove('filter-active'); if(b.dataset.gfilter===filter) b.classList.add('filter-active'); });
+  renderGallery(filter);
+}
+
+// ==================== MODAL ====================
+function openModal(name) {
+  const c = COMPONENTS.find(x => x.name === name);
+  if (!c) return;
+  const lev = LEVEL_LABELS[c.level];
+  document.getElementById('modalHeader').innerHTML = `
+    <div class="flex items-center gap-3">
+      <span class="font-mono text-lg font-bold">${c.name}</span>
+      <span class="level-chip ${lev.cls}">${lev.label}</span>
+    </div>
+    <button onclick="closeModal()" class="text-2xl text-gray-400 hover:text-gray-600 leading-none">&times;</button>`;
+
+  document.getElementById('modalBody').innerHTML = `
+    <p class="text-gray-600 mb-6">${c.desc}</p>
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div>
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-3">Preview</div>
+        <div class="preview-box mb-4">${c.preview}</div>
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-2">Свойства</div>
+        <table class="text-xs w-full">
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">Radix / Dep</td><td><code class="bg-gray-100 px-1 rounded">${c.radix}</code></td></tr>
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">@logaz/ui</td><td>${c.ds ? '<span class="text-green-600 font-medium">&#10003; В пакете</span>' : '<span class="text-yellow-600">Локальный</span>'}</td></tr>
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">Fuel Hub</td><td>${c.fuelhub === 'reexport' ? '<span class="text-indigo-600">Re-export</span>' : c.fuelhub === 'custom' ? '<span class="text-yellow-600">Custom</span>' : '\u2014'}</td></tr>
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">Card Mobile</td><td>${c.cardmobile === 'reexport' ? '<span class="text-indigo-600">Re-export</span>' : c.cardmobile === 'custom' ? '<span class="text-yellow-600">Custom</span>' : '\u2014'}</td></tr>
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">Loyalty CRM</td><td>${c.loyalty === 'reexport' ? '<span class="text-indigo-600">Re-export</span>' : c.loyalty === 'custom' ? '<span class="text-yellow-600">Custom</span>' : '\u2014'}</td></tr>
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">AGZS Public</td><td>${c.agzs === 'reexport' ? '<span class="text-indigo-600">Re-export</span>' : c.agzs === 'custom' ? '<span class="text-yellow-600">Custom</span>' : '\u2014'}</td></tr>
+          <tr><td class="py-1 pr-4 text-gray-500 font-medium">Действие</td><td><strong>${ACTION_MAP[c.level]}</strong></td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-3">Code Example</div>
+        <div class="code-block"><pre><code class="language-typescript">${escapeHtml(c.code)}</code></pre></div>
+        ${c.ds ? `<div class="mt-4"><div class="text-xs text-gray-400 uppercase tracking-wider mb-3">Re-export wrapper</div><div class="code-block"><pre><code class="language-typescript">${escapeHtml(`// src/components/ui/${c.name}.tsx\nexport { ${capitalize(c.name)} } from '@logaz/ui'`)}</code></pre></div></div>` : ''}
+      </div>
+    </div>`;
+
+  document.getElementById('modal').classList.remove('hidden');
+  document.querySelectorAll('#modalBody code').forEach(el => hljs.highlightElement(el));
+}
+
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ==================== SECTIONS ====================
+function showSection(section) {
+  document.getElementById('section-audit').classList.toggle('hidden', section !== 'audit');
+  document.getElementById('section-gallery').classList.toggle('hidden', section !== 'gallery');
+  document.querySelectorAll('.section-tab').forEach(t => {
+    if (t.dataset.section === section) { t.className = 'section-tab px-4 py-2 rounded-t-lg text-sm font-medium bg-white text-brand-500'; }
+    else { t.className = 'section-tab px-4 py-2 rounded-t-lg text-sm font-medium bg-brand-400/50 text-white/80 hover:bg-brand-400/70'; }
+  });
+  if (section === 'gallery' && !document.getElementById('galleryContainer').innerHTML) renderGallery('all');
+}
+
+// ==================== UTILS ====================
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function capitalize(s) { return s.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(''); }
+
+// ==================== WAVES ====================
+function renderWaves() {
+  ['core','extended','custom'].forEach((level,i) => {
+    const el = document.getElementById('wave'+(i+1));
+    const cls = ['bg-green-100 text-green-700','bg-blue-100 text-blue-700','bg-yellow-100 text-yellow-700'][i];
+    COMPONENTS.filter(c=>c.level===level).forEach(c => {
+      el.innerHTML += `<span class="inline-block text-[11px] ${cls} px-2 py-0.5 rounded font-mono cursor-pointer hover:opacity-70" onclick="openModal('${c.name}')">${c.name}</span>`;
+    });
+  });
+}
+
+// ==================== INIT ====================
+renderTable('all');
+renderWaves();
+</script>
+</body>
+</html>
