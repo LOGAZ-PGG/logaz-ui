@@ -254,7 +254,11 @@ export {
   NavigationMenuViewport,
 } from './components/ui/navigation-menu'
 
-// Pagination
+// Data Pagination (high-level wrapper)
+export { DataPagination } from './components/ui/data-pagination'
+export type { DataPaginationProps } from './components/ui/data-pagination'
+
+// Pagination (low-level primitives)
 export {
   Pagination,
   PaginationContent,
