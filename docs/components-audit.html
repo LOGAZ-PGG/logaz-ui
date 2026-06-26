@@ -11,7 +11,7 @@
         extend: {
           colors: {
             brand: { 50:'#E8EFFC',100:'#C5D7F7',200:'#9FBDE8',300:'#6B9AD4',400:'#4A78BF',500:'#3B55A2',600:'#2E4585',700:'#233568',800:'#1B2A52',900:'#1B3154' },
-            accent: { 50:'#FFF4E6',100:'#FFE0B2',200:'#FFCC80',300:'#FFB74D',400:'#FFA726',500:'#FB8607',600:'#F57C00',700:'#E65100',800:'#BF360C',900:'#D73A02' }
+            accent: { 50:'#FFF4E6',100:'#FFE0B2',200:'#FFCC80',300:'#FFB74D',400:'#FFA726',500:'#F28E46',600:'#F57C00',700:'#E65100',800:'#BF360C',900:'#D73A02' }
           }
         }
       }
@@ -52,7 +52,7 @@
     .sh-btn-outline { background: transparent; color: #0f172a; border: 1px solid #e2e8f0; }
     .sh-btn-ghost { background: transparent; color: #0f172a; border: none; }
     .sh-btn-destructive { background: #ef4444; color: white; border: none; }
-    .sh-btn-accent { background: #FB8607; color: white; border: none; }
+    .sh-btn-accent { background: #F28E46; color: white; border: none; }
     .sh-btn-accent:hover { background: #F57C00; }
     .sh-btn-sm { padding: 4px 12px; font-size: 13px; }
     .sh-btn-lg { padding: 10px 24px; font-size: 15px; }
@@ -63,7 +63,7 @@
     .sh-badge-secondary { background: #f1f5f9; color: #0f172a; }
     .sh-badge-outline { background: transparent; color: #0f172a; border: 1px solid #e2e8f0; }
     .sh-badge-destructive { background: #fef2f2; color: #dc2626; }
-    .sh-badge-accent { background: #FFF4E6; color: #FB8607; }
+    .sh-badge-accent { background: #FFF4E6; color: #F28E46; }
     .sh-card { border-radius: 8px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .sh-separator { height: 1px; background: #e2e8f0; width: 100%; }
     .sh-label { font-size: 14px; font-weight: 500; color: #0f172a; }
@@ -182,7 +182,7 @@
               <div class="pl-3">/hooks &mdash; useToast, useIsMobile</div>
             </div>
             <div class="text-gray-500 mt-2">
-              <div class="mb-1"><span class="font-medium">Brand:</span> Primary #3B55A2 &middot; Secondary #FB8607</div>
+              <div class="mb-1"><span class="font-medium">Brand:</span> Primary #3B55A2 &middot; Secondary #F28E46</div>
               <div class="mb-1"><span class="font-medium">Удалено кода:</span> ~15 000 строк дублирования</div>
               <div><span class="font-medium">Deploy:</span> Fuel Hub &#10003; Loyalty CRM &#10003; AGZS &#10003; Card Mobile &#9203;</div>
             </div>
@@ -466,7 +466,7 @@ const COMPONENTS = [
 </AspectRatio>` },
 
   { name:'avatar', ds:true, fuelhub:'reexport', cardmobile:'reexport', loyalty:'reexport', agzs:false, level:'extended', desc:'Аватар пользователя.', radix:'@radix-ui/react-avatar',
-    preview:`<div class="flex items-center gap-3"><div class="sh-avatar">ИП</div><div class="sh-avatar" style="background:#FB8607">АЗ</div><div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">?</div></div>`,
+    preview:`<div class="flex items-center gap-3"><div class="sh-avatar">ИП</div><div class="sh-avatar" style="background:#F28E46">АЗ</div><div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">?</div></div>`,
     code:`import { Avatar, AvatarImage, AvatarFallback } from '@logaz/ui'
 
 <Avatar>

@@ -67,13 +67,13 @@ declare const colors: {
         readonly 900: "#1B3154";
     };
     readonly secondary: {
-        readonly DEFAULT: "#FB8607";
+        readonly DEFAULT: "#F28E46";
         readonly 50: "#FFF4E6";
         readonly 100: "#FFE4C1";
         readonly 200: "#FFD397";
         readonly 300: "#FFC26D";
         readonly 400: "#FFB54E";
-        readonly 500: "#FB8607";
+        readonly 500: "#F28E46";
         readonly 600: "#F47806";
         readonly 700: "#EC6705";
         readonly 800: "#E45704";

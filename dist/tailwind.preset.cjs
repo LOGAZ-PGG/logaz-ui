@@ -98,7 +98,7 @@ var logazPreset = {
         "secondary-200": "#FFD397",
         "secondary-300": "#FFC26D",
         "secondary-400": "#FFB54E",
-        "secondary-500": "#FB8607",
+        "secondary-500": "#F28E46",
         "secondary-600": "#F47806",
         "secondary-700": "#EC6705",
         "secondary-800": "#E45704",
@@ -120,7 +120,7 @@ var logazPreset = {
         // Backward compatibility
         logaz: {
           blue: "#3B55A2",
-          orange: "#FB8607",
+          orange: "#F28E46",
           white: "#FFFFFF",
           "light-gray": "#F5F5F5",
           gray: "#CCCCCC",

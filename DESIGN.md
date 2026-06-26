@@ -2,7 +2,7 @@
 
 ## 1. Visual Theme & Atmosphere
 
-LOGAZ is an ecosystem of fuel station management applications — from customer-facing loyalty apps to internal CRM dashboards. The design language is professional and trustworthy, reflecting the energy/fuel industry with a confident blue-and-orange palette. The primary brand color is a deep institutional blue (`#3B55A2`) paired with a warm, energetic orange (`#FB8607`) for calls-to-action.
+LOGAZ is an ecosystem of fuel station management applications — from customer-facing loyalty apps to internal CRM dashboards. The design language is professional and trustworthy, reflecting the energy/fuel industry with a confident blue-and-orange palette. The primary brand color is a deep institutional blue (`#3B55A2`) paired with a warm, energetic orange (`#F28E46`) for calls-to-action.
 
 The ecosystem spans 4 applications with a shared UI library (`logaz-ui`), ensuring visual consistency while allowing app-specific adaptations. All apps support light and dark modes via HSL CSS variables on the `.dark` class.
 
@@ -11,7 +11,7 @@ The ecosystem spans 4 applications with a shared UI library (`logaz-ui`), ensuri
 - **Density:** Varies — CRM is data-dense with tables and dashboards; loyalty app is spacious and mobile-first
 - **Philosophy:** Functional clarity — fuel station operators and customers need fast, reliable interfaces
 - **Motion:** Subtle — accordion, fade-in, slide transitions. Mobile apps add touch-optimized animations
-- **Brand presence:** Blue (`#3B55A2`) + Orange (`#FB8607`) — consistent across all apps
+- **Brand presence:** Blue (`#3B55A2`) + Orange (`#F28E46`) — consistent across all apps
 - **Architecture:** Shared `logaz-ui` preset → per-app Tailwind config extensions
 
 **Applications:**
@@ -51,7 +51,7 @@ The ecosystem spans 4 applications with a shared UI library (`logaz-ui`), ensuri
 | `--secondary-200` | `#FFD397` | Hover tints |
 | `--secondary-300` | `#FFC26D` | Warm accents |
 | `--secondary-400` | `#FFB54E` | Secondary interactive |
-| `--secondary-500` | `#FB8607` | **Secondary brand** — CTAs, highlights, alerts |
+| `--secondary-500` | `#F28E46` | **Secondary brand** — CTAs, highlights, alerts |
 | `--secondary-600` | `#F47806` | Hover on secondary |
 | `--secondary-700` | `#EC6705` | Active/pressed |
 | `--secondary-800` | `#E45704` | Deep orange |
@@ -110,7 +110,7 @@ The ecosystem spans 4 applications with a shared UI library (`logaz-ui`), ensuri
 ```
 --sidebar-background:          #2E5389  (Primary-700)
 --sidebar-foreground:          #FFFFFF
---sidebar-primary:             #FB8607  (Secondary-500, orange)
+--sidebar-primary:             #F28E46  (Secondary-500, orange)
 --sidebar-primary-foreground:  #FFFFFF
 --sidebar-accent:              #35609C  (Primary-600)
 --sidebar-accent-foreground:   #FFFFFF
@@ -468,7 +468,7 @@ stagger > *:         0.05s increments per child
 
 - Use `logaz-ui` Tailwind preset as the base for all apps — import `@logaz/ui/tailwind`
 - Use brand blue (`#3B55A2`) for primary actions, navigation, headings
-- Use brand orange (`#FB8607`) for CTAs, highlights, attention-grabbing elements
+- Use brand orange (`#F28E46`) for CTAs, highlights, attention-grabbing elements
 - Apply semantic colors consistently: green=success, red=error, yellow=warning, blue=info
 - Use Montserrat for headings across all apps
 - Support both light and dark modes via HSL CSS variables
@@ -543,7 +543,7 @@ Padding scales from 16px (mobile) to 48px (ultra-wide)
 ### Quick Color Reference
 
 - Primary brand: LOGAZ Blue `#3B55A2`
-- Secondary brand: LOGAZ Orange `#FB8607`
+- Secondary brand: LOGAZ Orange `#F28E46`
 - Success: `#4CAF50`
 - Warning: `#FFC107`
 - Error/Destructive: `#F44336`
@@ -553,13 +553,13 @@ Padding scales from 16px (mobile) to 48px (ultra-wide)
 - Primary text: `#212121` (light) / `hsl(210, 40%, 98%)` (dark)
 - Secondary text: `#757575`
 - Border: `hsl(214.3, 31.8%, 91.4%)` light / `hsl(217.2, 32.6%, 17.5%)` dark
-- CRM sidebar: `#2E5389` background, `#FB8607` accent, `#1B3154` border
+- CRM sidebar: `#2E5389` background, `#F28E46` accent, `#1B3154` border
 
 ### Example Component Prompts
 
 "Create a LOGAZ dashboard card: `rounded-lg border bg-card shadow-sm hover:shadow-md transition-shadow`. Header `p-6`: title at `text-2xl font-semibold` (Montserrat), description `text-sm text-muted-foreground`. Content `p-6 pt-0`. Primary button `bg-[#3B55A2] text-white rounded-md h-10 px-4 hover:bg-[#35609C]`."
 
-"Build a CRM sidebar: `bg-[#2E5389]` background, `border-r border-[#1B3154]`, `w-64` width. Logo area at top. Nav items: `text-white text-sm px-3 py-2 rounded-md hover:bg-[#35609C]`. Active item: `bg-[#35609C]`. CTA highlight in orange `#FB8607`."
+"Build a CRM sidebar: `bg-[#2E5389]` background, `border-r border-[#1B3154]`, `w-64` width. Logo area at top. Nav items: `text-white text-sm px-3 py-2 rounded-md hover:bg-[#35609C]`. Active item: `bg-[#35609C]`. CTA highlight in orange `#F28E46`."
 
 "Design a loyalty tier badge: `rounded-full px-3 py-1 text-xs font-semibold`. Bronze: warm copper tones. Silver: cool gray. Gold: rich amber. Platinum: deep slate with shine."
 
@@ -572,7 +572,7 @@ Padding scales from 16px (mobile) to 48px (ultra-wide)
 ### Iteration Guide
 
 - Blue (`#3B55A2`) is institutional trust — use for primary actions, headings, active states
-- Orange (`#FB8607`) is energy and urgency — use for CTAs, highlights, attention
+- Orange (`#F28E46`) is energy and urgency — use for CTAs, highlights, attention
 - Never mix blue and orange in the same button — pick one per context
 - CRM has the densest layout — 6+ column grids at ultra-wide
 - Mobile apps follow Card App patterns — bottom tab nav, `p-4` content, `pb-16` nav clearance
