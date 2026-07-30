@@ -9,9 +9,16 @@ const PopoverTrigger = PopoverPrimitive.Trigger
 
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-  <PopoverPrimitive.Portal>
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
+    /**
+     * По умолчанию контент рендерится в Portal (в конец body). `portal={false}` —
+     * инлайн, в DOM-поддереве родителя: нужно для комбобокса/поиска внутри Dialog,
+     * чей focus-trap иначе не даёт печатать в поле (портал уносит контент наружу).
+     */
+    portal?: boolean
+  }
+>(({ className, align = "center", sideOffset = 4, portal = true, ...props }, ref) => {
+  const content = (
     <PopoverPrimitive.Content
       ref={ref}
       align={align}
@@ -22,8 +29,9 @@ const PopoverContent = React.forwardRef<
       )}
       {...props}
     />
-  </PopoverPrimitive.Portal>
-))
+  )
+  return portal ? <PopoverPrimitive.Portal>{content}</PopoverPrimitive.Portal> : content
+})
 PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
 export { Popover, PopoverTrigger, PopoverContent }
