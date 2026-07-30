@@ -625,7 +625,14 @@ declare const PaginationEllipsis: {
 
 declare const Popover: React$1.FC<PopoverPrimitive.PopoverProps>;
 declare const PopoverTrigger: React$1.ForwardRefExoticComponent<PopoverPrimitive.PopoverTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
-declare const PopoverContent: React$1.ForwardRefExoticComponent<Omit<PopoverPrimitive.PopoverContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const PopoverContent: React$1.ForwardRefExoticComponent<Omit<PopoverPrimitive.PopoverContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & {
+    /**
+     * По умолчанию контент рендерится в Portal (в конец body). `portal={false}` —
+     * инлайн, в DOM-поддереве родителя: нужно для комбобокса/поиска внутри Dialog,
+     * чей focus-trap иначе не даёт печатать в поле (портал уносит контент наружу).
+     */
+    portal?: boolean;
+} & React$1.RefAttributes<HTMLDivElement>>;
 
 declare const Progress: React$1.ForwardRefExoticComponent<Omit<ProgressPrimitive.ProgressProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
 
